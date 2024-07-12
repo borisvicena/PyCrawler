@@ -40,6 +40,36 @@ def get_all_website_links(url):
             return
 
         soup = BeautifulSoup(response.content, "html.parser")
+
+        # Extract meta tags
+        title_tag = soup.find("title")
+        meta_description = soup.find("meta", attrs={"name": "description"})
+        title = title_tag.string.strip() if title_tag else ""
+        description = meta_description["content"].strip() if meta_description else ""
+
+        # Extract header tags
+        header_tags = [tag.text.strip() for tag in soup.find_all(["h1", "h2", "h3"])]
+
+        # Extract canonical URL
+        canonical_tag = soup.find("link", attrs={"rel": "canonical"})
+        canonical_url = canonical_tag["href"] if canonical_tag else ""
+
+        # Extract image alt texts
+        img_tags = soup.find_all("img")
+        alt_texts = [tag.get("alt", "") for tag in img_tags]
+
+        data.append({
+            "URL": url,
+            "Status Code": response.status_code,
+            "Error": "",
+            "Title": title,
+            "Meta Description": description,
+            "Header Tags": ", ".join(header_tags),
+            "Canonical URL": canonical_url,
+            "Image Alt Text": ", ".join(alt_texts)
+        })
+
+        # Extract links
         for a_tag in soup.find_all("a", href=True):
             href = a_tag.attrs["href"]
             if not is_valid(href):
