@@ -1,41 +1,35 @@
 import pandas as pd
-import networkx as nx
-from pyvis.network import Network
+import matplotlib.pyplot as plt
+import mplcursors  # Import mplcursors for hover functionality
 
 # Load data from Excel
 filename = 'crawled_data.xlsx'
-urls_df = pd.read_excel(filename, sheet_name='URLs')
-links_df = pd.read_excel(filename, sheet_name='Links')
+data_df = pd.read_excel(filename, sheet_name='URLs')
 
-# Create a directed graph
-G = nx.DiGraph()
+# Filter and count error codes
+error_counts = data_df['Status Code'].value_counts()
 
-# Add nodes (URLs)
-for _, row in urls_df.iterrows():
-    G.add_node(row['URL'], status=row['Status Code'], error=row['Error'])
+# Sort error codes by count (optional)
+error_counts = error_counts.sort_index()
 
-# Add edges (links between URLs)
-for _, row in links_df.iterrows():
-    G.add_edge(row['Source'], row['Target'])
+# Plotting the bar chart
+fig, ax = plt.subplots(figsize=(10, 6))
+bars = ax.bar(error_counts.index.astype(str), error_counts, color='skyblue')
 
-# Create a Pyvis network
-net = Network(notebook=True, height='1000px', width='100%', bgcolor='#222222', font_color='white', cdn_resources='in_line')
+# Add labels to the bars
+for bar in bars:
+    yval = bar.get_height()
+    ax.text(bar.get_x() + bar.get_width()/2, yval, int(yval), ha='center', va='bottom', fontsize=8)
 
-# Transfer the networkx graph to Pyvis
-net.from_nx(G)
+# Customize plot details
+ax.set_title('Error Codes Distribution')
+ax.set_xlabel('Error Code')
+ax.set_ylabel('Count')
+ax.set_xticklabels(error_counts.index.astype(str), rotation=45)
+ax.grid(True)
 
-# Customize node and edge appearance
-for node in net.nodes:
-    node['title'] = node['id']
-    node['color'] = 'skyblue'
-    node['size'] = 10
+# Enable cursor-based hovering
+mplcursors.cursor(hover=True)
 
-for edge in net.edges:
-    edge['color'] = 'gray'
-
-# Generate the network graph
-net.show('crawl_graph.html')
-
-# If running in a notebook, display directly
-net.show_buttons(filter_=['physics'])
-net.show('crawl_graph.html')
+plt.tight_layout()
+plt.show()
